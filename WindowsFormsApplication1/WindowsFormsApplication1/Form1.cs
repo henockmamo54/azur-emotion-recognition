@@ -60,23 +60,10 @@ namespace WindowsFormsApplication1
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 response = await client.PostAsync(uri, content);
                 responseContent = response.Content.ReadAsStringAsync().Result;
-
-                //resoponseImageEmotion = JsonConvert.DeserializeObject<RootObject>(responseContent.Replace("[", "").Replace("]", ""));
+                
 
                 multipleImageEmotionResponse = JsonConvert.DeserializeObject<List<RootObject>>(responseContent);
-
-                //if (resoponseImageEmotion != null)
-                //{
-                //    txt_anger.Text = ": " + Math.Round(resoponseImageEmotion.scores.anger * 100, 2);
-                //    txt_contempt.Text = ": " + Math.Round(resoponseImageEmotion.scores.contempt * 100, 2);
-                //    txt_disgust.Text = ": " + Math.Round(resoponseImageEmotion.scores.disgust * 100, 2);
-                //    txt_fear.Text = ": " + Math.Round(resoponseImageEmotion.scores.fear * 100, 2);
-                //    txt_happiness.Text = ": " + Math.Round(resoponseImageEmotion.scores.happiness * 100, 2);
-                //    txt_neutral.Text = ": " + Math.Round(resoponseImageEmotion.scores.neutral * 100, 2);
-                //    txt_sadness.Text = ": " + Math.Round(resoponseImageEmotion.scores.sadness * 100, 2);
-                //    txt_surprise.Text = ": " + Math.Round(resoponseImageEmotion.scores.surprise * 100, 2);
-                //}
-
+                
                 showResponse();
                 pictureBox1.Refresh();
 
@@ -136,6 +123,11 @@ namespace WindowsFormsApplication1
             if (multipleImageEmotionResponse != null)
             {
 
+                int index = 1;
+                // Create font and brush.
+                Font drawFont = new Font("Arial", 16);
+                SolidBrush drawBrush = new SolidBrush(Color.Green);                
+
                 foreach (RootObject resoponseImageEmotion in multipleImageEmotionResponse)
                 {
 
@@ -152,7 +144,11 @@ namespace WindowsFormsApplication1
                             Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top * scalefactor_h),
                             (int)(resoponseImageEmotion.faceRectangle.width * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height * scalefactor_h));
 
+                            // Create point for upper-left corner of drawing.
+                            PointF drawPoint = new PointF((int)(resoponseImageEmotion.faceRectangle.left * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top * scalefactor_h));
+
                             g.DrawRectangle(System.Drawing.Pens.Red, rect);
+                            g.DrawString(index + "", drawFont, drawBrush, drawPoint);
                         }
                         else
                         {
@@ -162,11 +158,14 @@ namespace WindowsFormsApplication1
                             Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top / scalefactor_h),
                             (int)(resoponseImageEmotion.faceRectangle.width / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height / scalefactor_h));
 
+                            PointF drawPoint = new PointF((int)(resoponseImageEmotion.faceRectangle.left / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top / scalefactor_h));
+
                             g.DrawRectangle(System.Drawing.Pens.Red, rect);
+                            g.DrawString(index + "", drawFont, drawBrush, drawPoint);
                         }
                     }
 
-
+                    index++;
                 }
 
 
