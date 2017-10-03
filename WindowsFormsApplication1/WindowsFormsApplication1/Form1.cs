@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Drawing;
 using WindowsFormsApplication1.Models;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace WindowsFormsApplication1
 {
@@ -13,6 +14,7 @@ namespace WindowsFormsApplication1
     {
         OpenFileDialog openFileDialog1;
         RootObject resoponseImageEmotion;
+        List<RootObject> multipleImageEmotionResponse;
         float scalefactor_w = 1;
 
         public Form1()
@@ -24,6 +26,7 @@ namespace WindowsFormsApplication1
         {
 
             openFileDialog1 = new OpenFileDialog();
+            multipleImageEmotionResponse = new List<RootObject>();
         }
 
         byte[] GetImageAsByteArray(string imageFilePath)
@@ -58,20 +61,23 @@ namespace WindowsFormsApplication1
                 response = await client.PostAsync(uri, content);
                 responseContent = response.Content.ReadAsStringAsync().Result;
 
+                //resoponseImageEmotion = JsonConvert.DeserializeObject<RootObject>(responseContent.Replace("[", "").Replace("]", ""));
 
-                resoponseImageEmotion = JsonConvert.DeserializeObject<RootObject>(responseContent.Replace("[", "").Replace("]", ""));
+                multipleImageEmotionResponse = JsonConvert.DeserializeObject<List<RootObject>>(responseContent);
 
-                if (resoponseImageEmotion != null)
-                {
-                    txt_anger.Text = ": " + Math.Round(resoponseImageEmotion.scores.anger * 100, 2);
-                    txt_contempt.Text = ": " + Math.Round(resoponseImageEmotion.scores.contempt * 100, 2);
-                    txt_disgust.Text = ": " + Math.Round(resoponseImageEmotion.scores.disgust * 100, 2);
-                    txt_fear.Text = ": " + Math.Round(resoponseImageEmotion.scores.fear * 100, 2);
-                    txt_happiness.Text = ": " + Math.Round(resoponseImageEmotion.scores.happiness * 100, 2);
-                    txt_neutral.Text = ": " + Math.Round(resoponseImageEmotion.scores.neutral * 100, 2);
-                    txt_sadness.Text = ": " + Math.Round(resoponseImageEmotion.scores.sadness * 100, 2);
-                    txt_surprise.Text = ": " + Math.Round(resoponseImageEmotion.scores.surprise * 100, 2);
-                }
+                //if (resoponseImageEmotion != null)
+                //{
+                //    txt_anger.Text = ": " + Math.Round(resoponseImageEmotion.scores.anger * 100, 2);
+                //    txt_contempt.Text = ": " + Math.Round(resoponseImageEmotion.scores.contempt * 100, 2);
+                //    txt_disgust.Text = ": " + Math.Round(resoponseImageEmotion.scores.disgust * 100, 2);
+                //    txt_fear.Text = ": " + Math.Round(resoponseImageEmotion.scores.fear * 100, 2);
+                //    txt_happiness.Text = ": " + Math.Round(resoponseImageEmotion.scores.happiness * 100, 2);
+                //    txt_neutral.Text = ": " + Math.Round(resoponseImageEmotion.scores.neutral * 100, 2);
+                //    txt_sadness.Text = ": " + Math.Round(resoponseImageEmotion.scores.sadness * 100, 2);
+                //    txt_surprise.Text = ": " + Math.Round(resoponseImageEmotion.scores.surprise * 100, 2);
+                //}
+
+                showResponse();
                 pictureBox1.Refresh();
 
             }
@@ -80,12 +86,35 @@ namespace WindowsFormsApplication1
             Console.WriteLine(responseContent);
         }
 
+        public void showResponse()
+        {
+
+            txt_anger.Text  =  txt_contempt.Text = txt_disgust.Text = txt_fear.Text = txt_happiness.Text =
+                txt_neutral.Text = txt_sadness.Text = txt_surprise.Text = " " ;
+
+            foreach (RootObject response in multipleImageEmotionResponse)
+            {
+
+                txt_anger.Text += ": " + Math.Round(response.scores.anger * 100, 2);
+                txt_contempt.Text += ": " + Math.Round(response.scores.contempt * 100, 2);
+                txt_disgust.Text += ": " + Math.Round(response.scores.disgust * 100, 2);
+                txt_fear.Text += ": " + Math.Round(response.scores.fear * 100, 2);
+                txt_happiness.Text += ": " + Math.Round(response.scores.happiness * 100, 2);
+                txt_neutral.Text += ": " + Math.Round(response.scores.neutral * 100, 2);
+                txt_sadness.Text += ": " + Math.Round(response.scores.sadness * 100, 2);
+                txt_surprise.Text += ": " + Math.Round(response.scores.surprise * 100, 2);
+            }
+
+
+            pictureBox1.Refresh();
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             DialogResult result = openFileDialog1.ShowDialog();
             if (result == DialogResult.OK) // Test result.
             {
-                resoponseImageEmotion = null;
+                multipleImageEmotionResponse = null;
                 Console.WriteLine(openFileDialog1.FileName);
 
                 string imageFilePath = openFileDialog1.FileName;
@@ -95,38 +124,52 @@ namespace WindowsFormsApplication1
                 pictureBox1.Image = Image.FromFile(imageFilePath);
                 this.pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
 
-                //pictureBox1.Refresh();
             }
         }
 
         private void pictureBox1_Paint(object sender, PaintEventArgs e)
         {
-            if (resoponseImageEmotion != null)
+            Graphics g = e.Graphics;
+
+
+
+            if (multipleImageEmotionResponse != null)
             {
-                Graphics g = e.Graphics;
 
-
-                scalefactor_w = pictureBox1.Image.Width / (float)pictureBox1.Width;
-                if (scalefactor_w < 1)
-                {
-                    scalefactor_w = pictureBox1.Width / (float)pictureBox1.Image.Width;
-                    float scalefactor_h = pictureBox1.Height / (float)pictureBox1.Image.Height;
-
-                    Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top * scalefactor_h),
-                    (int)(resoponseImageEmotion.faceRectangle.width * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height * scalefactor_h));
-
-                    g.DrawRectangle(System.Drawing.Pens.Red, rect);
-                }
-                else
+                foreach (RootObject resoponseImageEmotion in multipleImageEmotionResponse)
                 {
 
-                    float scalefactor_h = pictureBox1.Image.Height / (float)pictureBox1.Height;
+                    if (resoponseImageEmotion != null)
+                    {
 
-                    Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top / scalefactor_h),
-                    (int)(resoponseImageEmotion.faceRectangle.width / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height / scalefactor_h));
 
-                    g.DrawRectangle(System.Drawing.Pens.Red, rect);
+                        scalefactor_w = pictureBox1.Image.Width / (float)pictureBox1.Width;
+                        if (scalefactor_w < 1)
+                        {
+                            scalefactor_w = pictureBox1.Width / (float)pictureBox1.Image.Width;
+                            float scalefactor_h = pictureBox1.Height / (float)pictureBox1.Image.Height;
+
+                            Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top * scalefactor_h),
+                            (int)(resoponseImageEmotion.faceRectangle.width * scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height * scalefactor_h));
+
+                            g.DrawRectangle(System.Drawing.Pens.Red, rect);
+                        }
+                        else
+                        {
+
+                            float scalefactor_h = pictureBox1.Image.Height / (float)pictureBox1.Height;
+
+                            Rectangle rect = new Rectangle((int)(resoponseImageEmotion.faceRectangle.left / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.top / scalefactor_h),
+                            (int)(resoponseImageEmotion.faceRectangle.width / scalefactor_w), (int)(resoponseImageEmotion.faceRectangle.height / scalefactor_h));
+
+                            g.DrawRectangle(System.Drawing.Pens.Red, rect);
+                        }
+                    }
+
+
                 }
+
+
             }
         }
     }
